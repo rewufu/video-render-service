@@ -1,0 +1,1969 @@
+diff --git a/node_modules/ffcreator/lib/animate/animation.js b/node_modules/ffcreator/lib/animate/animation.js
+index ea45742..520588f 100644
+--- a/node_modules/ffcreator/lib/animate/animation.js
++++ b/node_modules/ffcreator/lib/animate/animation.js
+@@ -28,15 +28,15 @@ class FFAnimation extends FFBase {
+   constructor(conf = { time: 0.7, delay: 0, ease: 'Linear.None' }) {
+     super({ type: 'animation' });
+ 
+-    const { from, to, time = .7, delay = 0, ease = 'Linear.None', parent } = conf;
++    const { from, to, time = .7, delay = 0, ease = 'Linear.None', parent, type} = conf;
+     this.from = from;
++    to.type = type
+     this.to = to;
+     this.ease = ease;
+     this.parent = parent;
+     this.proxyAttr = {};
+     this.isFFAni = true;
+     this.autoAlpha = false;
+-
+     this.time = DateUtil.toMilliseconds(time);
+     this.delay = DateUtil.toMilliseconds(delay);
+     this.tween = this.createTween();
+diff --git a/node_modules/ffcreator/lib/animate/animations.js b/node_modules/ffcreator/lib/animate/animations.js
+index d05a887..6df60e6 100644
+--- a/node_modules/ffcreator/lib/animate/animations.js
++++ b/node_modules/ffcreator/lib/animate/animations.js
+@@ -38,6 +38,7 @@ class FFAnimations {
+    * @public
+    */
+   addAnimate(animation) {
++    // console.log(animation,'animation')
+     if (!animation.isFFAni) {
+       const parent = this.target;
+       animation = new FFAnimation({ ...animation, parent });
+@@ -54,6 +55,7 @@ class FFAnimations {
+   addEffect(a, b, c) {
+     const { display } = this.target;
+     const conf = b === undefined ? clone(a) : { type: a, time: b, delay: c };
++    // console.log('conf', conf)
+     const animation = Effects.getAnimation(conf, display);
+     if (animation) this.addAnimate(animation);
+   }
+@@ -123,7 +125,6 @@ class FFAnimations {
+     forEach(this.list, ani => {
+       if (first.delay > ani.delay) first = ani;
+     });
+-
+     return first;
+   }
+ 
+diff --git a/node_modules/ffcreator/lib/animate/effects.js b/node_modules/ffcreator/lib/animate/effects.js
+index 9524ac4..e40ba6c 100644
+--- a/node_modules/ffcreator/lib/animate/effects.js
++++ b/node_modules/ffcreator/lib/animate/effects.js
+@@ -57,12 +57,20 @@ const TARGET_DOWN_BIG = '_target_down_big_';
+ const TARGET_LEFT_BIG = '_target_left_big_';
+ const TARGET_RIGHT_BIG = '_target_right_big_';
+ const TARGET_ROTATE = '_target_rotate_';
++const TARGET_ROTATE_OUT = '_target_rotate_out';
+ const TARGET_ROTATE_LEFT = '_target_rotate_left_';
+ const TARGET_ROTATE_LEFT_BIG = '_target_rotate_left_big_';
+ const TARGET_ROTATE_RIGHT = '_target_rotate_right_';
+ const TARGET_ROTATE_RIGHT_BIG = '_target_rotate_right_big_';
+ const TARGET_ALPHA = '_target_alpha_';
+-
++const TARGET_ROTATE_DOWN_LEFT = '_target_rotate_down_left_'
++const TARGET_ROTATE_DOWN_LEFT1 = '_target_rotate_down_left_1'
++const TARGET_ROTATE_DOWN_RIGHT = '_target_rotate_down_right_'
++const TARGET_ROTATE_UP_LEFT = '_target_rotate_up_left_'
++const TARGET_ROTATE_UP_RIGHT = '_target_rotate_up_right_'
++const TARGET_ROTATE_DOWN_RIGHT1 = '_target_rotate_down_right_1'
++const TARGET_ROTATE_UP_LEFT1 = '_target_rotate_up_left_1'
++const TARGET_ROTATE_UP_RIGHT1 = '_target_rotate_up_right_1'
+ /**
+  * base props
+  */
+@@ -74,6 +82,7 @@ const MIN_DIS = 150;
+ const MAX_DIS = 550;
+ const MIN_ROT = PI / 4;
+ const MAX_ROT = PI / 2;
++const MAIN_ROT = 2 * PI;
+ const ZOOMING_SPEED = 0.05;
+ const MOVEING_SPEED = 20;
+ 
+@@ -113,42 +122,42 @@ Effects.effects = {
+   backOut: [{ ...OUTS, from: { scale: 1 }, to: { scale: 0.3 }, ease: 'Back.In' }, 'fadeOut'],
+   backInLeft: [
+     'fadeIn',
+-    { from: { scale: 0.7 }, to: { scale: 1 } },
++    // { from: { scale: 0.7 }, to: { scale: 1 } },
+     { ...INS, from: TARGET_LEFT_BIG, to: TARGET, ease: 'Back.Out' },
+   ],
+   backInRight: [
+     'fadeIn',
+-    { from: { scale: 0.7 }, to: { scale: 1 } },
++    // { from: { scale: 0.7 }, to: { scale: 1 } },
+     { ...INS, from: TARGET_RIGHT_BIG, to: TARGET, ease: 'Back.Out' },
+   ],
+   backInUp: [
+     'fadeIn',
+-    { from: { scale: 0.7 }, to: { scale: 1 } },
++    // { from: { scale: 0.7 }, to: { scale: 1 } },
+     { ...INS, from: TARGET_DOWN_BIG, to: TARGET, ease: 'Back.Out' },
+   ],
+   backInDown: [
+     'fadeIn',
+-    { from: { scale: 0.7 }, to: { scale: 1 } },
++    // { from: { scale: 0.7 }, to: { scale: 1 } },
+     { ...INS, from: TARGET_UP_BIG, to: TARGET, ease: 'Back.Out' },
+   ],
+   backOutLeft: [
+     'fadeOut',
+-    { from: { scale: 1 }, to: { scale: 0.7 } },
++    // { from: { scale: 1 }, to: { scale: 0.7 } },
+     { ...OUTS, to: TARGET_LEFT_BIG, from: TARGET, ease: 'Back.In' },
+   ],
+   backOutRight: [
+     'fadeOut',
+-    { from: { scale: 1 }, to: { scale: 0.7 } },
++    // { from: { scale: 1 }, to: { scale: 0.7 } },
+     { ...OUTS, to: TARGET_RIGHT_BIG, from: TARGET, ease: 'Back.In' },
+   ],
+   backOutUp: [
+     'fadeOut',
+-    { from: { scale: 1 }, to: { scale: 0.7 } },
++    // { from: { scale: 1 }, to: { scale: 0.7 } },
+     { ...OUTS, to: TARGET_UP_BIG, from: TARGET, ease: 'Back.In' },
+   ],
+   backOutDown: [
+     'fadeOut',
+-    { from: { scale: 1 }, to: { scale: 0.7 } },
++    // { from: { scale: 1 }, to: { scale: 0.7 } },
+     { ...OUTS, to: TARGET_DOWN_BIG, from: TARGET, ease: 'Back.In' },
+   ],
+ 
+@@ -156,96 +165,96 @@ Effects.effects = {
+   bounceIn: ['fadeIn', { ...INS, from: { scale: 0.1 }, to: { scale: 1 }, ease: 'Elastic.Out' }],
+   bounceInDown: [
+     'fadeIn',
+-    { from: { scale: 0.3 }, to: { scale: 1 } },
++    // { from: { scale: 0.3 }, to: { scale: 1 } },
+     { ...INS, from: TARGET_UP, to: TARGET, ease: 'Elastic.Out' },
+   ],
+   bounceInUp: [
+     'fadeIn',
+-    { from: { scale: 0.3 }, to: { scale: 1 } },
++    // { from: { scale: 0.3 }, to: { scale: 1 } },
+     { ...INS, from: TARGET_DOWN, to: TARGET, ease: 'Elastic.Out' },
+   ],
+   bounceInLeft: [
+     'fadeIn',
+-    { from: { scale: 0.3 }, to: { scale: 1 } },
++    // { from: { scale: 0.3 }, to: { scale: 1 } },
+     { ...INS, from: TARGET_LEFT, to: TARGET, ease: 'Elastic.Out' },
+   ],
+   bounceInRight: [
+     'fadeIn',
+-    { from: { scale: 0.3 }, to: { scale: 1 } },
++    // { from: { scale: 0.3 }, to: { scale: 1 } },
+     { ...INS, from: TARGET_RIGHT, to: TARGET, ease: 'Elastic.Out' },
+   ],
+   bounceOut: ['fadeOut', { ...OUTS, from: { scale: 1 }, to: { scale: 0.3 }, ease: 'Elastic.In' }],
+   bounceOutDown: [
+     'fadeOut',
+-    { from: { scale: 1 }, to: { scale: 0.3 } },
++    // { from: { scale: 1 }, to: { scale: 0.3 } },
+     { ...OUTS, from: TARGET, to: TARGET_DOWN, ease: 'Elastic.In' },
+   ],
+   bounceOutLeft: [
+     'fadeOut',
+-    { from: { scale: 1 }, to: { scale: 0.3 } },
++    // { from: { scale: 1 }, to: { scale: 0.3 } },
+     { ...OUTS, from: TARGET, to: TARGET_LEFT, ease: 'Elastic.In' },
+   ],
+   bounceOutRight: [
+     'fadeOut',
+-    { from: { scale: 1 }, to: { scale: 0.3 } },
++    // { from: { scale: 1 }, to: { scale: 0.3 } },
+     { ...OUTS, from: TARGET, to: TARGET_RIGHT, ease: 'Elastic.In' },
+   ],
+   bounceOutUp: [
+     'fadeOut',
+-    { from: { scale: 1 }, to: { scale: 0.3 } },
++    // { from: { scale: 1 }, to: { scale: 0.3 } },
+     { ...OUTS, from: TARGET, to: TARGET_UP, ease: 'Elastic.In' },
+   ],
+ 
+   // Rotate In Out
+-  rotateIn: ['fadeIn', { ...INS, from: TARGET_ROTATE_LEFT, to: TARGET_ROTATE }],
+-  rotateOut: ['fadeOut', { ...OUTS, from: TARGET_ROTATE, to: TARGET_ROTATE_RIGHT }],
++  rotateIn: ['fadeIn', { ...INS, from: TARGET_ROTATE_OUT, to: TARGET_ROTATE }],
++  rotateOut: ['fadeOut', { ...OUTS, from: TARGET_ROTATE, to: TARGET_ROTATE_OUT }],
+   rotateInDownLeft: [
+     'fadeIn',
+-    { from: TARGET_LEFT, to: TARGET },
+-    { from: { scale: 0.3 }, to: { scale: 1 } },
+-    { ...INS, from: TARGET_ROTATE_LEFT_BIG, to: TARGET_ROTATE },
++    // { from: TARGET_LEFT, to: TARGET },
++    // { from: { scale: 0.3 }, to: { scale: 1 } },
++    { ...INS, from: TARGET_ROTATE_DOWN_LEFT, to: TARGET_ROTATE_DOWN_LEFT1 },
+   ],
+   rotateInDownRight: [
+     'fadeIn',
+-    { from: TARGET_RIGHT, to: TARGET },
+-    { from: { scale: 0.3 }, to: { scale: 1 } },
+-    { ...INS, from: TARGET_ROTATE_LEFT_BIG, to: TARGET_ROTATE },
++    // { from: TARGET_RIGHT, to: TARGET },
++    // { from: { scale: 0.3 }, to: { scale: 1 } },
++    { ...INS, from: TARGET_ROTATE_DOWN_RIGHT, to: TARGET_ROTATE_DOWN_RIGHT1 },
+   ],
+   rotateInUpLeft: [
+     'fadeIn',
+-    { from: TARGET_DOWN, to: TARGET },
+-    { from: { scale: 0.3 }, to: { scale: 1 } },
+-    { ...INS, from: TARGET_ROTATE_LEFT_BIG, to: TARGET_ROTATE },
++    // { from: TARGET_DOWN, to: TARGET },
++    // { from: { scale: 0.3 }, to: { scale: 1 } },
++    { ...INS, from: TARGET_ROTATE_UP_LEFT, to: TARGET_ROTATE_UP_LEFT1 },
+   ],
+   rotateInUpRight: [
+     'fadeIn',
+-    { from: TARGET_UP, to: TARGET },
+-    { from: { scale: 0.3 }, to: { scale: 1 } },
+-    { ...INS, from: TARGET_ROTATE_LEFT_BIG, to: TARGET_ROTATE },
++    // { from: TARGET_UP, to: TARGET },
++    // { from: { scale: 0.3 }, to: { scale: 1 } },
++    { ...INS, from: TARGET_ROTATE_UP_RIGHT, to: TARGET_ROTATE_UP_RIGHT1 },
+   ],
+   rotateOutDownLeft: [
+     'fadeOut',
+-    { from: TARGET, to: TARGET_LEFT },
+-    { from: { scale: 1 }, to: { scale: 0.3 } },
+-    { ...OUTS, from: TARGET_ROTATE, to: TARGET_ROTATE_RIGHT_BIG },
++    // { from: TARGET, to: TARGET_LEFT },
++    // { from: { scale: 1 }, to: { scale: 0.3 } },
++    { ...OUTS, from: TARGET_ROTATE_DOWN_LEFT1, to: TARGET_ROTATE_DOWN_LEFT },
+   ],
+   rotateOutDownRight: [
+     'fadeOut',
+-    { from: TARGET, to: TARGET_RIGHT },
+-    { from: { scale: 1 }, to: { scale: 0.3 } },
+-    { ...OUTS, from: TARGET_ROTATE, to: TARGET_ROTATE_RIGHT_BIG },
++    // { from: TARGET, to: TARGET_RIGHT },
++    // { from: { scale: 1 }, to: { scale: 0.3 } },
++    { ...OUTS, from: TARGET_ROTATE_DOWN_RIGHT1, to: TARGET_ROTATE_DOWN_RIGHT },
+   ],
+   rotateOutUpLeft: [
+     'fadeOut',
+-    { from: TARGET, to: TARGET_UP },
+-    { from: { scale: 1 }, to: { scale: 0.3 } },
+-    { ...OUTS, from: TARGET_ROTATE, to: TARGET_ROTATE_RIGHT_BIG },
++    // { from: TARGET, to: TARGET_UP },
++    // { from: { scale: 1 }, to: { scale: 0.3 } },
++    { ...OUTS, from: TARGET_ROTATE_UP_LEFT1, to: TARGET_ROTATE_UP_LEFT },
+   ],
+   rotateOutUpRight: [
+     'fadeOut',
+-    { from: TARGET, to: TARGET_DOWN },
+-    { from: { scale: 1 }, to: { scale: 0.3 } },
+-    { ...OUTS, from: TARGET_ROTATE, to: TARGET_ROTATE_RIGHT_BIG },
++    // { from: TARGET, to: TARGET_DOWN },
++    // { from: { scale: 1 }, to: { scale: 0.3 } },
++    { ...OUTS, from: TARGET_ROTATE_UP_RIGHT1, to: TARGET_ROTATE_UP_RIGHT },
+   ],
+ 
+   // Roll In Out
+@@ -305,14 +314,17 @@ Effects.effects = {
+   ],
+ 
+   // Slide In Out
+-  slideInDown: { ...INS, from: TARGET_UP, to: TARGET },
+-  slideInLeft: { ...INS, from: TARGET_LEFT, to: TARGET },
+-  slideInRight: { ...INS, from: TARGET_RIGHT, to: TARGET },
+-  slideInUp: { ...INS, from: TARGET_DOWN, to: TARGET },
+-  slideOutDown: { ...OUTS, to: TARGET_DOWN, from: TARGET },
+-  slideOutLeft: { ...OUTS, to: TARGET_LEFT, from: TARGET },
+-  slideOutRight: { ...OUTS, to: TARGET_RIGHT, from: TARGET },
+-  slideOutUp: { ...OUTS, to: TARGET_UP, from: TARGET },
++  slideInDown: ['fadeIn', { ...INS, from: TARGET_UP, to: TARGET }],
++  slideInLeft: ['fadeIn', { ...INS, from: TARGET_LEFT, to: TARGET }],
++  slideInRight: ['fadeIn', { ...INS, from: TARGET_RIGHT, to: TARGET }],
++  slideInUp: ['fadeIn', { ...INS, from: TARGET_DOWN, to: TARGET }],
++  slideOutDown: ['fadeOut', { ...OUTS, to: TARGET_DOWN, from: TARGET }],
++  slideOutLeft: [
++    'fadeOut', { ...OUTS, to: TARGET_LEFT, from: TARGET }],
++  slideOutRight: [
++    'fadeOut', { ...OUTS, to: TARGET_RIGHT, from: TARGET }],
++  slideOutUp: [
++    'fadeOut', { ...OUTS, to: TARGET_UP, from: TARGET }],
+ 
+   // background effect ing...
+   zoomingIn: [{ ...INSING, from: { scale: 1 }, add: { scale: ZOOMING_SPEED }, mask: true }],
+@@ -337,7 +349,7 @@ Effects.effects = {
+  * @param {object} obj - Display object display attributes
+  * @public
+  */
+-Effects.getAnimation = function(conf, obj) {
++Effects.getAnimation = function (conf, obj) {
+   const { type } = conf;
+   const effects = this.getEffects(type);
+   if (isEmpty(effects)) return null;
+@@ -357,7 +369,7 @@ Effects.getAnimation = function(conf, obj) {
+  * @param {string} type - type name
+  * @public
+  */
+-Effects.getEffects = function(type) {
++Effects.getEffects = function (type) {
+   const types = isArray(type) ? type : [type];
+ 
+   let effects = [];
+@@ -388,7 +400,7 @@ Effects.getEffects = function(type) {
+  * @param {object} valObj - the new effect value
+  * @public
+  */
+-Effects.createEffect = function(name, valObj) {
++Effects.createEffect = function (name, valObj) {
+   const effect = {
+     // from: {},
+     // to: {},
+@@ -405,7 +417,7 @@ Effects.createEffect = function(name, valObj) {
+  * Get a random effect name
+  * @public
+  */
+-Effects.getRandomEffectName = function() {
++Effects.getRandomEffectName = function () {
+   let arr = [];
+   const checkPushName = (type, key) => {
+     if (type === 'in' && arr.indexOf(key) < 0) arr.push(key);
+@@ -428,7 +440,7 @@ Effects.getRandomEffectName = function() {
+  * @param {string} type - type name
+  * @private
+  */
+-Effects.mappingToRealAttr = function(effect, obj, conf) {
++Effects.mappingToRealAttr = function (effect, obj, conf) {
+   // 1. reset from to
+   effect.from = this.getMappingVal(effect.from, obj);
+   effect.to = this.getMappingVal(effect.to, obj);
+@@ -443,13 +455,13 @@ Effects.mappingToRealAttr = function(effect, obj, conf) {
+       effect.to[key] = effect.from[key] + effect.add[key] * effect.time;
+     }
+   }
+-
++  // console.log('obj', obj.x, obj.y, obj.width, obj.height, obj)
++  // console.log(effect,conf, 'effect')
+   return effect;
+ };
+ 
+-Effects.getMappingVal = function(fakeVal, obj) {
++Effects.getMappingVal = function (fakeVal, obj) {
+   let val = fakeVal;
+-
+   switch (fakeVal) {
+     case TARGET:
+       val = { x: obj.x, y: obj.y };
+@@ -487,6 +499,36 @@ Effects.getMappingVal = function(fakeVal, obj) {
+     case TARGET_ROTATE:
+       val = { rotation: obj.rotation };
+       break;
++    case TARGET_ROTATE_OUT:
++      val = { rotation: obj.rotation + MAX_ROT };
++      break;
++
++    case TARGET_ROTATE_DOWN_LEFT:
++      val = { rotation: obj.rotation - MIN_ROT, x: obj.x - obj._width / 2, y: obj.y + obj._height / 2 };
++      break;
++    case TARGET_ROTATE_DOWN_RIGHT:
++      val = { rotation: obj.rotation + MIN_ROT, x: obj.x + obj._width / 2, y: obj.y + obj._height / 2 };
++      break;
++    case TARGET_ROTATE_UP_LEFT:
++      val = { rotation: obj.rotation + MIN_ROT, x: obj.x - obj._width / 2, y: obj.y + obj._height / 2 };
++      break;
++    case TARGET_ROTATE_UP_RIGHT:
++      val = { rotation: obj.rotation - MIN_ROT, x: obj.x + obj._width / 2, y: obj.y + obj._height / 2 };
++      break;
++
++    case TARGET_ROTATE_DOWN_LEFT1:
++      val = { rotation: obj.rotation };
++      break;
++    case TARGET_ROTATE_DOWN_RIGHT1:
++      val = { rotation: obj.rotation };
++      break;
++    case TARGET_ROTATE_UP_LEFT1:
++      val = { rotation: obj.rotation };
++      break;
++    case TARGET_ROTATE_UP_RIGHT1:
++      val = { rotation: obj.rotation };
++      break;
++    // unknow
+     case TARGET_ROTATE_LEFT:
+       val = { rotation: obj.rotation - MIN_ROT };
+       break;
+diff --git a/node_modules/ffcreator/lib/audio/audio.js b/node_modules/ffcreator/lib/audio/audio.js
+index 1b4bd02..73558fb 100644
+--- a/node_modules/ffcreator/lib/audio/audio.js
++++ b/node_modules/ffcreator/lib/audio/audio.js
+@@ -63,6 +63,14 @@ class FFAudio extends FFBase {
+     this.fadeOut = fadeOut;
+   }
+ 
++  setSs(ss) {
++    this.ss = ss;
++  }
++
++  setTo(to) {
++    this.to = to;
++  }
++
+   addInput(command) {
+     const { loop, ss, to, path } = this;
+ 
+diff --git a/node_modules/ffcreator/lib/conf/conf.js b/node_modules/ffcreator/lib/conf/conf.js
+index 09c7063..9eef63f 100644
+--- a/node_modules/ffcreator/lib/conf/conf.js
++++ b/node_modules/ffcreator/lib/conf/conf.js
+@@ -19,7 +19,8 @@ class Conf {
+   constructor(conf = {}) {
+     this.conf = conf;
+ 
+-    this.conf.pathId = Utils.genUuid();
++    // this.conf.pathId = Utils.genUuid();
++    this.copyByDefaultVal(conf, 'pathId', Utils.genUuid());
+     this.copyByDefaultVal(conf, 'crf', 20);
+     this.copyByDefaultVal(conf, 'vb', null);
+     this.copyByDefaultVal(conf, 'cover', null);
+@@ -30,10 +31,11 @@ class Conf {
+     this.copyByDefaultVal(conf, 'audioLoop', true);
+     this.copyByDefaultVal(conf, 'ffmpeglog', false);
+     this.copyByDefaultVal(conf, 'ext', 'mp4');
++    this.copyByDefaultVal(conf, 'transparent', false);
+     this.copyByDefaultVal(conf, 'preset', 'medium');
+     this.copyByDefaultVal(conf, 'cacheFormat', 'raw');
+     this.copyByDefaultVal(conf, 'cacheQuality', 80);
+-    this.copyByDefaultVal(conf, 'resolution', 1);
++    this.copyByDefaultVal(conf, 'resolution', 10);
+     this.copyByDefaultVal(conf, 'defaultOutputOptions', {
+       merge: true,
+       options: [],
+@@ -50,6 +52,11 @@ class Conf {
+     this.copyFromMultipleVal(conf, 'highWaterMark', 'size', '512kb');
+     this.copyFromMultipleVal(conf, 'normalizeAudio', 'norAudio', false);
+     this.copyFromMultipleVal(conf, 'clarity', 'renderClarity', 'medium');
++
++    // 自定义参数
++    this.copyByDefaultVal(conf, 'multiNodeRender', false);
++    this.copyByDefaultVal(conf, 'renderStartFrame', 0);
++    this.copyByDefaultVal(conf, 'clusterNum', 5);
+   }
+ 
+   /**
+diff --git a/node_modules/ffcreator/lib/core/renderer.js b/node_modules/ffcreator/lib/core/renderer.js
+index 51617fb..3feb9e4 100644
+--- a/node_modules/ffcreator/lib/core/renderer.js
++++ b/node_modules/ffcreator/lib/core/renderer.js
+@@ -25,6 +25,8 @@
+ const { gl } = require('inkpaint');
+ const forEach = require('lodash/forEach');
+ const FS = require('../utils/fs');
++const fs = require('fs');
++const path = require('path')
+ const GLUtil = require('../utils/gl');
+ const Perf = require('../utils/perf');
+ const FFBase = require('../core/base');
+@@ -77,13 +79,16 @@ class Renderer extends FFBase {
+    */
+   async preProcessing() {
+     try {
+-      const preload = this.rootConf('preload');
++      const conf = this.rootConf()
++      const preload = conf.getVal('preload');
++      const multiNodeRender = conf.getVal('multiNodeRender');
++      const renderStartFrame = conf.getVal('renderStartFrame');
++      const dir = conf.getVal('detailedCacheDir');
+       const creator = this.getCreator();
+       const { loader } = creator;
+ 
+       // sub child preProcessing
+       await creator.runScenesFunc(async node => await node.preProcessing());
+-
+       // sub child preload
+       await creator.runScenesFunc(async node => {
+         if (preload && node.preload) {
+@@ -96,8 +101,17 @@ class Renderer extends FFBase {
+           });
+         }
+       });
++      if (multiNodeRender && renderStartFrame === 0) {
++        fs.writeFile(path.join(dir, 'detailedCacheSuccess.txt'), '主进程切片完成', (error) => {
++          // 创建失败
++          if (error) {
++            console.log(`创建失败：${error}`)
++          }
++          // 创建成功
++          console.log(`主进程切片完成` + Date.now())
++        })
++      }
+       await loader.loadAsync();
+-
+       creator.removeAllDisplayChildren();
+     } catch (error) {
+       this.emitError({ error, pos: 'preProcessing' });
+@@ -155,8 +169,8 @@ class Renderer extends FFBase {
+    */
+   async renderFrame(callback) {
+     const { timeline, gl } = this;
++    const conf = this.rootConf().conf;
+     const frameData = timeline.getFrameData();
+-
+     if (timeline.isOver()) {
+       callback && callback(null);
+       return null;
+@@ -182,9 +196,13 @@ class Renderer extends FFBase {
+       creator.removeDisplayChild(scene);
+     }
+ 
+-    FFLogger.info({ pos: 'renderFrame', msg: `current frame - ${timeline.frame}` });
+-    timeline.nextFrame();
+ 
++    timeline.nextFrame();
++    if (conf.multiNodeRender && frameData.frame % conf.clusterNum !== conf.renderStartFrame) {
++      callback && callback(null);
++      return null;
++    }
++    FFLogger.info({ pos: 'renderFrame', msg: `current frame - ${frameData.frame}` });
+     // Rendering logic part
+     if (type === 'normal') {
+       data = this.snapshotToBuffer();
+@@ -211,7 +229,9 @@ class Renderer extends FFBase {
+         data = CanvasUtil.toBuffer({ type: cacheFormat, canvas, quality });
+       }
+     }
+-
++    if (conf.multiNodeRender) {
++      fs.writeFileSync(path.join(conf.multiCacheDir, frameData.frame + '.' + conf.cacheFormat), data)
++    }
+     callback && callback(data);
+     return data;
+   }
+@@ -238,7 +258,6 @@ class Renderer extends FFBase {
+    */
+   createSynthesis() {
+     const { stream, timeline } = this;
+-
+     const conf = this.rootConf();
+     const cover = conf.getVal('cover');
+     const creator = this.getCreator();
+@@ -291,6 +310,7 @@ class Renderer extends FFBase {
+    */
+   removeCacheFiles() {
+     if (this.rootConf('debug')) return;
++    if (this.rootConf('multiNodeRender')) return;
+     const dir = this.rootConf('detailedCacheDir');
+     FS.rmDir(dir);
+   }
+diff --git a/node_modules/ffcreator/lib/core/synthesis.js b/node_modules/ffcreator/lib/core/synthesis.js
+index df844f8..605dacc 100644
+--- a/node_modules/ffcreator/lib/core/synthesis.js
++++ b/node_modules/ffcreator/lib/core/synthesis.js
+@@ -25,335 +25,361 @@ const FFmpegUtil = require('../utils/ffmpeg');
+ const FFEventer = require('../event/eventer');
+ 
+ class Synthesis extends FFEventer {
+-  constructor(conf) {
+-    super();
+-
+-    this.conf = conf;
+-    this.cover = null;
+-    this.audios = null;
+-    this.duration = 0;
+-    this.inputCount = 0;
+-    this.framesNum = 100;
+-    this.outputOptions = [];
+-    const threads = conf.getVal('threads');
+-    this.command = FFmpegUtil.createCommand({ threads });
+-  }
+-
+-  /**
+-   * set total frames number
+-   * @param {number} framesNum - total frames number
+-   * @public
+-   */
+-  setFramesNum(framesNum) {
+-    this.framesNum = framesNum;
+-  }
+-
+-  /**
+-   * Set the ffcreator total duration
+-   * @param {number} duration - total duration time
+-   * @public
+-   */
+-  setDuration(duration) {
+-    this.duration = duration;
+-  }
+-
+-  /**
+-   * Add the intermediate pictures processed in the cache directory to ffmpeg input
+-   * @param {Stream} stream - A readability stream
+-   * @public
+-   */
+-  addStream(stream) {
+-    const { conf, command } = this;
+-    const type = conf.getVal('cacheFormat');
+-    command.addInput(stream);
+-    if (type === 'raw') command.inputFormat('rawvideo');
+-    this.addStreamInputOptions();
+-    this.inputCount++;
+-  }
+-
+-  /**
+-   * Add input options for image input stream
+-   * @private
+-   */
+-  addStreamInputOptions() {
+-    const { conf, command } = this;
+-    const size = conf.getWH('x');
+-    const fps = conf.getVal('fps');
+-    const type = conf.getVal('cacheFormat');
+-
+-    const opts = ['-framerate', fps];
+-    // raw (unencoded data in BGRA order on little-endian (most) systems, ARGB on big-endian systems; top-to-bottom)
+-    const newOpts =
+-      type === 'raw'
+-        ? ['-s', size, '-vcodec', 'rawvideo', '-pixel_format', 'bgra', '-video_size', size]
+-        : [];
+-
+-    command.inputOptions(opts.concat(newOpts));
+-  }
+-
+-  /**
+-   * Add ordinary ffmpeg cover input elements
+-   * @param {string} input - A input elements
+-   * @public
+-   */
+-  addCover(cover) {
+-    this.cover = cover;
+-  }
+-
+-  /**
+-   * add audios to ffmpeg config
+-   * @public
+-   */
+-  addAudios(audios) {
+-    if (isEmpty(audios)) return;
+-
+-    const { command } = this;
+-    forEach(audios, audio => {
+-      audio.addInput(command);
+-      this.inputCount++;
+-    });
+-    this.audios = audios;
+-  }
+-
+-  /**
+-   * Add one or more background sounds
+-   * ##Note: Usage of adelay/volume filter
+-   * [1]adelay=5000|5000,volume=1[a];
+-   * [2]adelay=10000|10000,volume=10[b];
+-   * [3]adelay=15000|15000,volume=2[c];
+-   * [a][b][c]amix=3[a]
+-   * @param {array} audios - background sounds
+-   * @private
+-   */
+-  addAudioFilter() {
+-    const { conf, audios, duration } = this;
+-    if (isEmpty(audios)) return;
+-
+-    const normalizeAudio = conf.getVal('normalizeAudio');
+-    const filters = [];
+-    const length = audios.length;
+-    let outputs = '';
+-
+-    forEach(audios, (audio, index) => {
+-      const output = `audio${index}`;
+-      const audioCommand = audio.toFilterCommand({ index, duration });
+-      filters.push(audioCommand);
+-      outputs += `[${output}]`;
+-    });
+-
+-    if (normalizeAudio) {
+-      filters.push(`${outputs}amix=inputs=${length}:normalize=0`);
+-    } else {
+-      filters.push(`${outputs}amix=${length}`);
++    constructor(conf) {
++        super();
++
++        this.conf = conf;
++        this.cover = null;
++        this.audios = null;
++        this.duration = 0;
++        this.inputCount = 0;
++        this.framesNum = 100;
++        this.outputOptions = [];
++        const threads = conf.getVal('threads');
++        this.command = FFmpegUtil.createCommand({ threads });
+     }
+ 
+-    this.command.complexFilter(filters);
+-  }
+-
+-  /**
+-   * Add ffmpeg input configuration
+-   * @private
+-   */
+-  addInputOptions() {
+-    const { conf, command } = this;
+-    const customOpts = conf.getVal('inputOptions');
+-    customOpts && command.inputOptions(customOpts);
+-  }
+-
+-  /**
+-   * Get default ffmpeg output configuration
+-   * @private
+-   */
+-  getDefaultOutputOptions(configs) {
+-    const { merge, options = [] } = configs || {};
+-    const { conf } = this;
+-    const vb = conf.getVal('vb');
+-    const fps = conf.getVal('fps');
+-    const crf = conf.getVal('crf');
+-    const preset = conf.getVal('preset');
+-
+-    let opts = []
+-      // misc
+-      .concat([
+-        '-hide_banner', // hide_banner - parameter, you can display only meta information
+-        '-map_metadata',
+-        '-1',
+-        '-map_chapters',
+-        '-1',
+-      ])
+-
+-      // video
+-      .concat([
+-        '-c:v',
+-        'libx264', // c:v - H.264
+-        '-profile:v',
+-        'main', // profile:v - main profile: mainstream image quality. Provide I / P / B frames
+-        '-preset',
+-        preset, // preset - compromised encoding speed
+-        '-crf',
+-        crf, // crf - The range of quantization ratio is 0 ~ 51, where 0 is lossless mode, 23 is the default value, 51 may be the worst
+-        '-movflags',
+-        'faststart',
+-        '-pix_fmt',
+-        'yuv420p',
+-        '-r',
+-        fps,
+-      ]);
+-
+-    //---- vb -----
+-    if (vb) {
+-      opts = opts.concat(['-vb', vb]);
++    /**
++     * set total frames number
++     * @param {number} framesNum - total frames number
++     * @public
++     */
++    setFramesNum(framesNum) {
++        this.framesNum = framesNum;
+     }
+-    if (merge) {
+-      opts = opts.concat(options);
+-    } else {
+-      opts = options;
++
++    /**
++     * Set the ffcreator total duration
++     * @param {number} duration - total duration time
++     * @public
++     */
++    setDuration(duration) {
++        this.duration = duration;
++    }
++
++    /**
++     * Add the intermediate pictures processed in the cache directory to ffmpeg input
++     * @param {Stream} stream - A readability stream
++     * @public
++     */
++    addStream(stream) {
++        const { conf, command } = this;
++        const type = conf.getVal('cacheFormat');
++        command.addInput(stream);
++        if (type === 'raw') command.inputFormat('rawvideo');
++        this.addStreamInputOptions();
++        this.inputCount++;
++    }
++
++    /**
++     * Add input options for image input stream
++     * @private
++     */
++    addStreamInputOptions() {
++        const { conf, command } = this;
++        const size = conf.getWH('x');
++        const fps = conf.getVal('fps');
++        const type = conf.getVal('cacheFormat');
++        const opts = process.env.useGpu == 'true' ? ['-hwaccel', process.env.hwaccel, '-framerate', fps] : ['-framerate', fps];
++        // raw (unencoded data in BGRA order on little-endian (most) systems, ARGB on big-endian systems; top-to-bottom)
++        const newOpts =
++            type === 'raw'
++                ? ['-s', size, '-vcodec', 'rawvideo', '-pixel_format', 'bgra', '-video_size', size]
++                : [];
++
++        command.inputOptions(opts.concat(newOpts));
++    }
++
++    /**
++     * Add ordinary ffmpeg cover input elements
++     * @param {string} input - A input elements
++     * @public
++     */
++    addCover(cover) {
++        this.cover = cover;
++    }
++
++    /**
++     * add audios to ffmpeg config
++     * @public
++     */
++    addAudios(audios) {
++        if (isEmpty(audios)) return;
++
++        const { command } = this;
++        forEach(audios, audio => {
++            audio.addInput(command);
++            this.inputCount++;
++        });
++        this.audios = audios;
++    }
++
++    /**
++     * Add one or more background sounds
++     * ##Note: Usage of adelay/volume filter
++     * [1]adelay=5000|5000,volume=1[a];
++     * [2]adelay=10000|10000,volume=10[b];
++     * [3]adelay=15000|15000,volume=2[c];
++     * [a][b][c]amix=3[a]
++     * @param {array} audios - background sounds
++     * @private
++     */
++    addAudioFilter() {
++        const { conf, audios, duration } = this;
++        if (isEmpty(audios)) return;
++
++        const normalizeAudio = conf.getVal('normalizeAudio');
++        const filters = [];
++        const length = audios.length;
++        let outputs = '';
++
++        forEach(audios, (audio, index) => {
++            const output = `audio${index}`;
++            const audioCommand = audio.toFilterCommand({ index, duration });
++            filters.push(audioCommand);
++            outputs += `[${output}]`;
++        });
++
++        if (normalizeAudio) {
++            filters.push(`${outputs}amix=inputs=${length}:normalize=0`);
++        } else {
++            filters.push(`${outputs}amix=${length}`);
++        }
++
++        this.command.complexFilter(filters);
++    }
++
++    /**
++     * Add ffmpeg input configuration
++     * @private
++     */
++    addInputOptions() {
++        const { conf, command } = this;
++        const customOpts = conf.getVal('inputOptions');
++        customOpts && command.inputOptions(customOpts);
++    }
++
++    /**
++     * Get default ffmpeg output configuration
++     * @private
++     */
++    getDefaultOutputOptions(configs) {
++        const { merge, options = [] } = configs || {};
++        const { conf } = this;
++        const vb = conf.getVal('vb');
++        const fps = conf.getVal('fps');
++        const crf = conf.getVal('crf');
++        const preset = conf.getVal('preset');
++        const useGpu = process.env.useGpu;
++
++        let opts = []
++
++            // misc
++            .concat([
++                '-hide_banner', // hide_banner - parameter, you can display only meta information
++                '-map_metadata',
++                '-1',
++                '-map_chapters',
++                '-1',
++            ])
++        if (useGpu == 'true') {
++            // video
++            opts = opts
++                .concat([
++                    '-c:v',
++                    process.env.gpuNvenc, // c:v - H.264
++                    '-profile:v',
++                    'main', // profile:v - main profile: mainstream image quality. Provide I / P / B frames
++                    '-preset',
++                    preset, // preset - compromised encoding speed
++                    '-crf',
++                    crf, // crf - The range of quantization ratio is 0 ~ 51, where 0 is lossless mode, 23 is the default value, 51 may be the worst
++                    '-movflags',
++                    'faststart',
++                    '-pix_fmt',
++                    'yuv420p',
++                    '-r',
++                    fps,
++                ]);
++        } else {
++            // video
++            opts = opts.concat([
++                '-c:v',
++                'libx264', // c:v - H.264
++                '-profile:v',
++                'main', // profile:v - main profile: mainstream image quality. Provide I / P / B frames
++                '-preset',
++                preset, // preset - compromised encoding speed
++                '-crf',
++                crf, // crf - The range of quantization ratio is 0 ~ 51, where 0 is lossless mode, 23 is the default value, 51 may be the worst
++                '-movflags',
++                'faststart',
++                '-pix_fmt',
++                'yuv420p',
++                '-r',
++                fps,
++            ]);
++        }
++
++
++        //---- vb -----
++        if (vb) {
++            opts = opts.concat(['-vb', vb]);
++        }
++        if (merge) {
++            opts = opts.concat(options);
++        } else {
++            opts = options;
++        }
++
++        return opts;
+     }
+ 
+-    return opts;
+-  }
++    /**
++     * Add ffmpeg output configuration
++     * @private
++     */
++    addOutputOptions() {
++        const { conf, audios, duration } = this;
++        const defaultOutputOptions = conf.getVal('defaultOutputOptions');
++
++        // custom
++        const customOpts = conf.getVal('outputOptions');
++        if (customOpts) FFmpegUtil.concatOpts(this.outputOptions, customOpts);
++
++        // default
++        const defaultOpts = this.getDefaultOutputOptions(defaultOutputOptions);
++        if (defaultOutputOptions) FFmpegUtil.concatOpts(this.outputOptions, defaultOpts);
++
++        // audios
++        if (!isEmpty(audios)) {
++            FFmpegUtil.concatOpts(this.outputOptions, ['-c:a', 'aac']);
++        }
+ 
+-  /**
+-   * Add ffmpeg output configuration
+-   * @private
+-   */
+-  addOutputOptions() {
+-    const { conf, audios, duration } = this;
+-    const defaultOutputOptions = conf.getVal('defaultOutputOptions');
++        this.command.outputOptions(this.outputOptions);
+ 
+-    // custom
+-    const customOpts = conf.getVal('outputOptions');
+-    if (customOpts) FFmpegUtil.concatOpts(this.outputOptions, customOpts);
++        // set max duration
++        this.command.setDuration(duration);
++    }
++
++    /**
++     * Set ffmpeg input path
++     * @private
++     */
++    addOutput() {
++        const finalOutput = this.getOutputPath('final');
++        const currOutput = this.getOutputPath('curr');
++        FS.ensureDir(finalOutput, true);
++        FS.ensureDir(currOutput, true);
++        this.command.output(currOutput);
++    }
+ 
+-    // default
+-    const defaultOpts = this.getDefaultOutputOptions(defaultOutputOptions);
+-    if (defaultOutputOptions) FFmpegUtil.concatOpts(this.outputOptions, defaultOpts);
++    /**
++     * Open ffmpeg production and processing
++     * @public
++     */
++    start() {
++        this.addInputOptions();
++        this.addAudioFilter();
++        this.addOutputOptions();
++        this.addCommandEvents();
++        this.addOutput();
++        this.command.run();
++    }
+ 
+-    // audios
+-    if (!isEmpty(audios)) {
+-      FFmpegUtil.concatOpts(this.outputOptions, ['-c:a', 'aac']);
++    /**
++     * Get the final output file path
++     * @private
++     */
++    getOutputPath(real = null) {
++        const { conf, cover } = this;
++        let output = conf.getVal('output');
++
++        if (cover && real !== 'final') {
++            const pathId = conf.getVal('pathId');
++            const dir = conf.getVal('detailedCacheDir');
++            output = path.join(dir, pathId + '_cover.mp4');
++        }
++
++        return path.normalize(output);
+     }
+ 
+-    this.command.outputOptions(this.outputOptions);
+-
+-    // set max duration
+-    this.command.setDuration(duration);
+-  }
+-
+-  /**
+-   * Set ffmpeg input path
+-   * @private
+-   */
+-  addOutput() {
+-    const finalOutput = this.getOutputPath('final');
+-    const currOutput = this.getOutputPath('curr');
+-    FS.ensureDir(finalOutput, true);
+-    FS.ensureDir(currOutput, true);
+-    this.command.output(currOutput);
+-  }
+-
+-  /**
+-   * Open ffmpeg production and processing
+-   * @public
+-   */
+-  start() {
+-    this.addInputOptions();
+-    this.addAudioFilter();
+-    this.addOutputOptions();
+-    this.addCommandEvents();
+-    this.addOutput();
+-    this.command.run();
+-  }
+-
+-  /**
+-   * Get the final output file path
+-   * @private
+-   */
+-  getOutputPath(real = null) {
+-    const { conf, cover } = this;
+-    let output = conf.getVal('output');
+-
+-    if (cover && real !== 'final') {
+-      const pathId = conf.getVal('pathId');
+-      const dir = conf.getVal('detailedCacheDir');
+-      output = path.join(dir, pathId + '_cover.mp4');
++    /**
++     * Add FFmpeg event to command
++     * @private
++     */
++    addCommandEvents() {
++        const { conf, cover, command, framesNum } = this;
++        const ffmpeglog = conf.getVal('ffmpeglog');
++        const highWaterMark = conf.getVal('highWaterMark');
++        const video = this.getOutputPath('curr');
++        const output = this.getOutputPath('final');
++
++        // complete and error callback
++        const completeFunc = () => {
++            this.emit({ type: 'synthesis-complete', output });
++            FFLogger.info({ pos: 'Synthesis', msg: 'synthesis complete.' });
++        };
++
++        const errorFunc = (error, stdout, stderr) => {
++            this.emitError({ error, pos: 'Synthesis' });
++            FFLogger.error({
++                error,
++                pos: 'Synthesis',
++                msg: `stdout:${stdout} \n stderr:${stderr}`,
++            });
++        };
++
++        // start event
++        command.on('start', commandLine => {
++            FFmpegUtil.setHighWaterMark({ command, highWaterMark });
++            this.emit({ type: 'synthesis-start', command: commandLine });
++            if (ffmpeglog) {
++                command.ffmpegProc.stderr.on('data', data => {
++                    // console.log(data)
++                    this.emitFfmpegLog({ text: `ffmpegProc Log: ${data}` })
++                });
++                this.emitFfmpegLog({ text: `ffmpegProc start: ${commandLine}` })
++            }
++            // log info
++            FFLogger.info({ pos: 'Synthesis', msg: `synthesis start: ${commandLine}` });
++        });
++
++        // progress event
++        command.on('progress', progress => {
++            let percent = Utils.floor(progress.frames / framesNum, 2);
++            percent = Math.min(1, percent);
++            this.emitProgress({ percent });
++            // log info
++            const percent100 = Math.floor(percent * 100);
++            FFLogger.info({ pos: 'Synthesis', msg: `synthesis progress: ${percent100}% done.` });
++        });
++
++        command.on('end', async () => {
++            // check if cover is included
++            if (cover) {
++                FFmpegUtil.addCoverImage({ video, output, cover })
++                    .then(completeFunc)
++                    .catch(([error, stdout, stderr]) => errorFunc(error, stdout, stderr));
++            } else {
++                completeFunc();
++            }
++        });
++
++        // error
++        command.on('error', (error, stdout, stderr) => errorFunc(error, stdout, stderr));
+     }
+ 
+-    return path.normalize(output);
+-  }
+-
+-  /**
+-   * Add FFmpeg event to command
+-   * @private
+-   */
+-  addCommandEvents() {
+-    const { conf, cover, command, framesNum } = this;
+-    const ffmpeglog = conf.getVal('ffmpeglog');
+-    const highWaterMark = conf.getVal('highWaterMark');
+-    const video = this.getOutputPath('curr');
+-    const output = this.getOutputPath('final');
+-
+-    // complete and error callback
+-    const completeFunc = () => {
+-      this.emit({ type: 'synthesis-complete', output });
+-      FFLogger.info({ pos: 'Synthesis', msg: 'synthesis complete.' });
+-    };
+-
+-    const errorFunc = (error, stdout, stderr) => {
+-      this.emitError({ error, pos: 'Synthesis' });
+-      FFLogger.error({
+-        error,
+-        pos: 'Synthesis',
+-        msg: `stdout:${stdout} \n stderr:${stderr}`,
+-      });
+-    };
+-
+-    // start event
+-    command.on('start', commandLine => {
+-      FFmpegUtil.setHighWaterMark({ command, highWaterMark });
+-      this.emit({ type: 'synthesis-start', command: commandLine });
+-      if (ffmpeglog) {
+-        command.ffmpegProc.stderr.on('data', data => console.log(data));
+-      }
+-      // log info
+-      FFLogger.info({ pos: 'Synthesis', msg: `synthesis start: ${commandLine}` });
+-    });
+-
+-    // progress event
+-    command.on('progress', progress => {
+-      let percent = Utils.floor(progress.frames / framesNum, 2);
+-      percent = Math.min(1, percent);
+-      this.emitProgress({ percent });
+-      // log info
+-      const percent100 = Math.floor(percent * 100);
+-      FFLogger.info({ pos: 'Synthesis', msg: `synthesis progress: ${percent100}% done.` });
+-    });
+-
+-    command.on('end', async () => {
+-      // check if cover is included
+-      if (cover) {
+-        FFmpegUtil.addCoverImage({ video, output, cover })
+-          .then(completeFunc)
+-          .catch(([error, stdout, stderr]) => errorFunc(error, stdout, stderr));
+-      } else {
+-        completeFunc();
+-      }
+-    });
+-
+-    // error
+-    command.on('error', (error, stdout, stderr) => errorFunc(error, stdout, stderr));
+-  }
+-
+-  destroy() {
+-    super.destroy();
+-    FFmpegUtil.destroy(this.command);
+-
+-    this.conf = null;
+-    this.cover = null;
+-    this.audios = null;
+-    this.command = null;
+-    this.outputOptions.length = 0;
+-  }
++    destroy() {
++        super.destroy();
++        FFmpegUtil.destroy(this.command);
++
++        this.conf = null;
++        this.cover = null;
++        this.audios = null;
++        this.command = null;
++        this.outputOptions.length = 0;
++    }
+ }
+ 
+ module.exports = Synthesis;
+diff --git a/node_modules/ffcreator/lib/creator.js b/node_modules/ffcreator/lib/creator.js
+index 876f2cc..8683249 100644
+--- a/node_modules/ffcreator/lib/creator.js
++++ b/node_modules/ffcreator/lib/creator.js
+@@ -18,6 +18,7 @@
+  * @class
+  */
+ const path = require('path');
++const fs = require('fs');
+ const Conf = require('./conf/conf');
+ const Pool = require('./core/pool');
+ const FFCon = require('./node/cons');
+@@ -37,6 +38,10 @@ class FFCreator extends FFCon {
+     this.audios = [];
+     this.inCenter = false;
+     this.conf = new Conf(conf);
++    if(this.getConf('multiNodeRender')){
++        let multiCacheDir = path.join(this.getConf('cacheDir'),'multiCacheDir')
++        this.setConf('multiCacheDir',multiCacheDir)
++    }
+     this.loader = new Loader();
+ 
+     this.createApp();
+@@ -53,6 +58,7 @@ class FFCreator extends FFCon {
+     this.resetSize();
+     const width = this.getConf('width');
+     const height = this.getConf('height');
++    const transparent = this.getConf('transparent');
+     const render = this.getConf('render');
+     const clarity = this.getConf('clarity');
+     const antialias = this.getConf('antialias');
+@@ -60,14 +66,21 @@ class FFCreator extends FFCon {
+     const key = `${this.type}_${render}`;
+     settings.PRECISION_FRAGMENT = `${clarity}p`;
+ 
++    const appOptions = {
++      useGL,
++      antialias,
++    };
++    // If set to transparent, override the default background color configuration
++    if (transparent) {
++      appOptions.transparent = true;
++    } else {
++      appOptions.backgroundColor = 0x000000;
++    }
++
+     const app = Pool.get(
+       key,
+       () =>
+-        new Application(width, height, {
+-          backgroundColor: 0x000000,
+-          useGL,
+-          antialias,
+-        }),
++        new Application(width, height, appOptions),
+     );
+     app.renderer.resize(width, height);
+     this.display = app.stage;
+@@ -298,7 +311,12 @@ class FFCreator extends FFCon {
+           const duration = this.getPrevScenesDuration(index - 1);
+           audio.start = duration + audio.start;
+         }
++        if(!audio.hasSSTO()) {
++          audio.setSs("0:00.000")
++          audio.setTo(scene.duration)
++        }
+       });
++
+       audios = audios.concat(scene.audios);
+     });
+     return audios;
+diff --git a/node_modules/ffcreator/lib/event/eventer.js b/node_modules/ffcreator/lib/event/eventer.js
+index 3275822..1a949a4 100644
+--- a/node_modules/ffcreator/lib/event/eventer.js
++++ b/node_modules/ffcreator/lib/event/eventer.js
+@@ -31,6 +31,11 @@ class FFEventer extends EventEmitter {
+     this.emit('progress', this.progressEvent);
+   }
+ 
++  emitFfmpegLog(data) {
++    if (!this.ffmpeglogEvent) this.ffmpeglogEvent = new FFEvent();
++    this.ffmpeglogEvent.init(data);
++    this.emit('ffmpegLog', this.ffmpeglogEvent);
++  }
+   /**
+    * Trigger an error event, you can locate the location of the error
+    * @public
+diff --git a/node_modules/ffcreator/lib/node/chart.js b/node_modules/ffcreator/lib/node/chart.js
+index 2ffb29f..06ae0d4 100644
+--- a/node_modules/ffcreator/lib/node/chart.js
++++ b/node_modules/ffcreator/lib/node/chart.js
+@@ -36,11 +36,11 @@ class FFChart extends FFImage {
+   constructor(conf = { list: [] }) {
+     super({ type: 'chart', ...conf });
+ 
+-    const { option, theme = 'light', updateNow = false } = this.conf;
++    const { option, optionOpts, theme = 'light', updateNow = false } = this.conf;
+     this.theme = theme;
+     this.option = option;
+     this.runUpdateNow = updateNow;
+-
++    this.optionOpts = optionOpts;
+     this.userCallback = null;
+     this.userCallbackTime = null;
+     this.time = 0;
+@@ -61,9 +61,10 @@ class FFChart extends FFImage {
+    * @param {object} option - option value
+    * @public
+    */
+-  setOption(option) {
+-    const { chart } = this;
+-    chart.setOption(option);
++  setOption(option, opts) {
++    const { chart, optionOpts } = this;
++    const newOpts = Object.assign({}, optionOpts, opts)
++    chart.setOption(option, newOpts);
+   }
+ 
+   /**
+@@ -101,7 +102,6 @@ class FFChart extends FFImage {
+   start() {
+     this.initECahrts();
+     this.initTexture();
+-
+     this.animations.start();
+     this.updateCallback = this.updateCallback.bind(this);
+     TimelineUpdate.addFrameCallback(this.updateCallback);
+@@ -113,10 +113,10 @@ class FFChart extends FFImage {
+     const ctx = createCanvas(128, 128);
+     echarts.setCanvasCreator(() => ctx);
+ 
+-    const { theme, option } = this;
++    const { theme, option, optionOpts } = this;
+     const canvas = createCanvas(width, height);
+     const chart = echarts.init(canvas, theme);
+-    chart.setOption(option);
++    chart.setOption(option, optionOpts);
+     this.fixZrender(chart);
+ 
+     this.ctx = ctx;
+@@ -158,7 +158,7 @@ class FFChart extends FFImage {
+     const animation = chart._zr.animation;
+ 
+     animation._startLoop = () => (animation._running = true);
+-    animation.update = function(notTriggerFrameAndStageUpdate) {
++    animation.update = function (notTriggerFrameAndStageUpdate) {
+       const time = TimelineUpdate.time;
+       const delta = TimelineUpdate.delta;
+       let clip = this._clipsHead;
+@@ -187,12 +187,12 @@ class FFChart extends FFImage {
+     TimelineUpdate.removeFrameCallback(this.updateCallback);
+     super.destroy();
+     this.chart.dispose();
+-
+     this.userCallback = null;
+     this.updateCallback = null;
+     this.userCallbackTime = null;
+     this.canvas = null;
+     this.option = null;
++    this.optionOpts = null;
+     this.chart = null;
+     this.ctx = null;
+   }
+diff --git a/node_modules/ffcreator/lib/node/gif.js b/node_modules/ffcreator/lib/node/gif.js
+index 343cc08..dfd9395 100644
+--- a/node_modules/ffcreator/lib/node/gif.js
++++ b/node_modules/ffcreator/lib/node/gif.js
+@@ -13,6 +13,7 @@
+  */
+ const path = require('path');
+ const FS = require('../utils/fs');
++const fs = require('fs');
+ const FFImage = require('./image');
+ const probe = require('ffmpeg-probe');
+ const { Sprite, Texture } = require('inkpaint');
+@@ -67,7 +68,7 @@ class FFGifImage extends FFImage {
+     try {
+       const info = await this.geGifInfo();
+       fps = Number(info.fps);
+-    } catch (e) {}
++    } catch (e) { }
+     return await this.extractGif(fps);
+   }
+ 
+diff --git a/node_modules/ffcreator/lib/node/node.js b/node_modules/ffcreator/lib/node/node.js
+index 9643e23..6fc064e 100644
+--- a/node_modules/ffcreator/lib/node/node.js
++++ b/node_modules/ffcreator/lib/node/node.js
+@@ -90,6 +90,15 @@ class FFNode extends FFBase {
+     this.display.rotation = rotation;
+   }
+ 
++  /**
++   * set display object rotation by deg
++   * @param deg
++   */
++  setRotateDeg(deg = 0) {
++    deg = deg * (3.1415927 / 180);
++    this.display.rotation = deg;
++  }
++
+   /**
+    * Set the duration of node in the scene
+    * @param {number} duration
+diff --git a/node_modules/ffcreator/lib/node/scene.js b/node_modules/ffcreator/lib/node/scene.js
+index c8e141e..e197706 100644
+--- a/node_modules/ffcreator/lib/node/scene.js
++++ b/node_modules/ffcreator/lib/node/scene.js
+@@ -30,7 +30,7 @@ class FFScene extends FFCon {
+     this.duration = 10;
+     this.frameCursor = 0;
+     this.state = 'start';
+-    this.pathId = Utils.genUuid();
++    // this.pathId = Utils.genUuid();
+ 
+     this.setTransition('fade', 0);
+     this.setBgColor(conf.color || conf.bgcolor || conf.background);
+diff --git a/node_modules/ffcreator/lib/node/subtitle.js b/node_modules/ffcreator/lib/node/subtitle.js
+index 1d0102b..d0e4ad5 100644
+--- a/node_modules/ffcreator/lib/node/subtitle.js
++++ b/node_modules/ffcreator/lib/node/subtitle.js
+@@ -283,7 +283,7 @@ class FFSubtitle extends FFNode {
+ 
+     forEach(list, text => {
+       // text += sign;
+-      const time = (text.length / totalLength) * duration;
++      const time = ((text.length + 1) / totalLength) * duration;
+       const frames = start + time * fps;
+       this.textList.push({ start, frames, text, draw: false });
+       start = frames;
+diff --git a/node_modules/ffcreator/lib/node/video.js b/node_modules/ffcreator/lib/node/video.js
+index 8caadf2..6a53fbc 100644
+--- a/node_modules/ffcreator/lib/node/video.js
++++ b/node_modules/ffcreator/lib/node/video.js
+@@ -19,6 +19,7 @@
+ const path = require('path');
+ const min = require('lodash/min');
+ const FS = require('../utils/fs');
++const fs = require('fs');
+ const FFImage = require('./image');
+ const probe = require('ffmpeg-probe');
+ const FFAudio = require('../audio/audio');
+@@ -47,7 +48,8 @@ class FFVideo extends FFImage {
+     this.codec = null;
+     this.preload = false;
+     this.useCache = false;
+-    this.clarity = conf.qscale || conf.clarity || 2;
++    this.clarity = conf.qscale || conf.clarity || 1;
++    this.volume = conf.volume || -1;
+     this.audio = conf.audio === undefined ? true : conf.audio;
+     this.loop = conf.loop === undefined ? false : conf.loop;
+     this.voImageExtra = conf.voImageExtra === undefined ? 'jpg' : conf.voImageExtra;
+@@ -114,7 +116,6 @@ class FFVideo extends FFImage {
+   setEndTime(endTime) {
+     if (endTime === undefined) return;
+     if (endTime === DEFAULT_TIME) return;
+-
+     endTime = DateUtil.secondsToHms(endTime);
+     this.endTime = endTime;
+   }
+@@ -145,13 +146,22 @@ class FFVideo extends FFImage {
+    * @public
+    */
+   async preProcessing() {
++
+     try {
+       const info = await this.getVideoInfo();
+       this.materials.info = info;
+-    } catch (e) {}
++    } catch (e) { }
+ 
+     this.resetDurationTime();
+-    if (this.audio) await this.extractAudio();
++    if (this.audio) {
++      const { streams = [] } = this.materials.info;
++      const hasAudioStream = streams.some(function (stream) {
++        return stream.codec_type === 'audio';
++      });
++      if (hasAudioStream) {
++        await this.extractAudio();
++      }
++    };
+     await this.extractVideo();
+     this.addAudioToScene();
+   }
+@@ -263,6 +273,7 @@ class FFVideo extends FFImage {
+       path: this.materials.apath,
+       start: this.getDelayTime(),
+       loop: this.loop,
++      volume: this.volume
+     });
+     this.parent.addAudio(audio);
+   }
+@@ -276,7 +287,6 @@ class FFVideo extends FFImage {
+       const opts =
+         this.endTime === DEFAULT_TIME ? [] : ['-ss', this.startTime, '-to', this.endTime];
+       this.materials.apath = this.getAOutput();
+-
+       this.acommand
+         .addInput(this.getPath())
+         .noVideo()
+@@ -285,6 +295,10 @@ class FFVideo extends FFImage {
+         .output(this.materials.apath);
+ 
+       this.acommand
++        .on('start', commandLine => {
++          // FFLogger.info({ pos: 'FFVideo', msg: 'Audio preProcessing start!command'+commandLine });
++          console.log('Audio preProcessing start!command'+commandLine)
++        })
+         .on('end', () => {
+           FFLogger.info({ pos: 'FFVideo', msg: 'Audio preProcessing completed!' });
+           resolve();
+@@ -302,16 +316,20 @@ class FFVideo extends FFImage {
+    * Extract the images file from the movie
+    * @private
+    */
++
+   extractVideo() {
+     return new Promise((resolve, reject) => {
+       const fps = this.rootConf('fps');
++      const multiNodeRender = this.rootConf('multiNodeRender');
++      const renderStartFrame = this.rootConf('renderStartFrame');
++      const dir = this.rootConf('detailedCacheDir');
+       const qscale = this.clarity;
+-      let opts = `-loglevel info -pix_fmt rgba -start_number 0 -vf fps=${fps} -qscale:v ${qscale}`.split(
++      let opts = `-loglevel info -pix_fmt rgba -start_number 0 -q:v ${qscale} -vf fps=${fps}`
++      opts = opts.split(
+         ' ',
+       );
+       let times = this.endTime === DEFAULT_TIME ? [] : ['-ss', this.startTime, '-to', this.endTime];
+       opts = opts.concat(times);
+-
+       this.materials.path = this.getVOutput();
+       this.vcommand.addInput(this.getPath());
+       this.vcommand.inputOptions(this.codec ? ['-c:v', this.codec] : []);
+@@ -323,19 +341,38 @@ class FFVideo extends FFImage {
+         })
+         .on('progress', progress => {
+           this.materials.length = progress.frames;
++          // console.log('materials1',this.materials,fps)
+         })
+         .on('end', () => {
+           FFLogger.info({
+             pos: 'FFVideo',
+             msg: `Video preProcessing completed: ${this.materials}`,
+           });
++          // console.log('materials', this.materials)
+           resolve();
+         })
+         .on('error', err => {
+           FFLogger.error({ pos: 'FFVideo', msg: `Video preProcessing error`, error: err });
+           reject(err);
+         });
+-      this.vcommand.run();
++      if (multiNodeRender && renderStartFrame != 0) {
++        let interval = setInterval(() => {
++          fs.access(path.join(dir, 'detailedCacheSuccess.txt'), fs.constants.F_OK, (err) => {
++            if (!err) {
++              if (isNaN(this.materials.info.duration)) {
++                this.materials.info.duration = this.materials.info.format.duration * 1000
++              }
++              this.materials.length = Math.round(fps * Math.min(this.endTime === DEFAULT_TIME ? this.parent.duration : DateUtil.hmsToSeconds(this.endTime) - DateUtil.hmsToSeconds(this.startTime), this.materials.info.duration / 1000));
++              // console.log('materials2', this.materials.length,DateUtil.hmsToSeconds(this.endTime) - DateUtil.hmsToSeconds(this.startTime),this.materials.info.duration)
++              clearInterval(interval)
++              resolve()
++            }
++          });
++        }, 100)
++      }
++      else {
++        this.vcommand.run();
++      }
+     });
+   }
+ 
+diff --git a/node_modules/ffcreator/lib/shader/InvertedPageCurlDown.js b/node_modules/ffcreator/lib/shader/InvertedPageCurlDown.js
+new file mode 100644
+index 0000000..5979768
+--- /dev/null
++++ b/node_modules/ffcreator/lib/shader/InvertedPageCurlDown.js
+@@ -0,0 +1,188 @@
++'use strict';
++
++/**
++ * WindowShades - Variant shutter effect post processing
++ *
++ * @object
++ */
++
++module.exports = {
++        "name": "InvertedPageCurlDown",
++        "paramsTypes":{},
++        "defaultParams":{},
++        "glsl": `
++  const float MIN_AMOUNT = -0.16;
++  const float MAX_AMOUNT = 1.5;
++  float amount = progress * (MAX_AMOUNT - MIN_AMOUNT) + MIN_AMOUNT;
++
++  const float PI = 3.141592653589793;
++
++  const float scale = 512.0;
++  const float sharpness = 3.0;
++
++  float cylinderCenter = amount;
++  // 360 degrees * amount
++  float cylinderAngle = 2.0 * PI * amount;
++
++  const float cylinderRadius = 1.0 / PI / 2.0;
++
++  vec3 hitPoint(float hitAngle, float yc, vec3 point, mat3 rrotation)
++  {
++          float hitPoint = hitAngle / (2.0 * PI);
++          point.y = hitPoint;
++          return rrotation * point;
++  }
++
++  vec4 antiAlias(vec4 color1, vec4 color2, float distanc)
++  {
++          distanc *= scale;
++          if (distanc < 0.0) return color2;
++          if (distanc > 2.0) return color1;
++          float dd = pow(1.0 - distanc / 2.0, sharpness);
++          return ((color2 - color1) * dd) + color1;
++  }
++
++  float distanceToEdge(vec3 point)
++  {
++          float dx = abs(point.x > 0.5 ? 1.0 - point.x : point.x);
++          float dy = abs(point.y > 0.5 ? 1.0 - point.y : point.y);
++          if (point.x < 0.0) dx = -point.x;
++          if (point.x > 1.0) dx = point.x - 1.0;
++          if (point.y < 0.0) dy = -point.y;
++          if (point.y > 1.0) dy = point.y - 1.0;
++          if ((point.x < 0.0 || point.x > 1.0) && (point.y < 0.0 || point.y > 1.0)) return sqrt(dx * dx + dy * dy);
++          return min(dx, dy);
++  }
++
++  vec4 seeThrough(float yc, vec2 p, mat3 rotation, mat3 rrotation)
++  {
++          float hitAngle = PI - (acos(yc / cylinderRadius) - cylinderAngle);
++          vec3 point = hitPoint(hitAngle, yc, rotation * vec3(p, 1.0), rrotation);
++          if (yc <= 0.0 && (point.x < 0.0 || point.y < 0.0 || point.x > 1.0 || point.y > 1.0))
++          {
++              return getToColor(p);
++          }
++
++          if (yc > 0.0) return getFromColor(p);
++
++          vec4 color = getFromColor(point.xy);
++          vec4 tcolor = vec4(0.0);
++
++          return antiAlias(color, tcolor, distanceToEdge(point));
++  }
++
++  vec4 seeThroughWithShadow(float yc, vec2 p, vec3 point, mat3 rotation, mat3 rrotation)
++  {
++          float shadow = distanceToEdge(point) * 30.0;
++          shadow = (1.0 - shadow) / 3.0;
++
++          if (shadow < 0.0) shadow = 0.0; else shadow *= amount;
++
++          vec4 shadowColor = seeThrough(yc, p, rotation, rrotation);
++          shadowColor.r -= shadow;
++          shadowColor.g -= shadow;
++          shadowColor.b -= shadow;
++
++          return shadowColor;
++  }
++
++  vec4 backside(float yc, vec3 point)
++  {
++          vec4 color = getFromColor(point.xy);
++          float gray = (color.r + color.b + color.g) / 15.0;
++          gray += (8.0 / 10.0) * (pow(1.0 - abs(yc / cylinderRadius), 2.0 / 10.0) / 2.0 + (5.0 / 10.0));
++          color.rgb = vec3(gray);
++          return color;
++  }
++
++  vec4 behindSurface(vec2 p, float yc, vec3 point, mat3 rrotation)
++  {
++          float shado = (1.0 - ((-cylinderRadius - yc) / amount * 7.0)) / 6.0;
++          shado *= 1.0 - abs(point.x - 0.5);
++
++          yc = (-cylinderRadius - cylinderRadius - yc);
++
++          float hitAngle = (acos(yc / cylinderRadius) + cylinderAngle) - PI;
++          point = hitPoint(hitAngle, yc, point, rrotation);
++
++          if (yc < 0.0 && point.x >= 0.0 && point.y >= 0.0 && point.x <= 1.0 && point.y <= 1.0 && (hitAngle < PI || amount > 0.5))
++          {
++                  shado = 1.0 - (sqrt(pow(point.x - 0.5, 2.0) + pow(point.y - 0.5, 2.0)) / (71.0 / 100.0));
++                  shado *= pow(-yc / cylinderRadius, 3.0);
++                  shado *= 0.5;
++          }
++          else
++          {
++                  shado = 0.0;
++          }
++          return vec4(getToColor(p).rgb - shado, 1.0);
++  }
++
++  vec4 transition(vec2 p) {
++
++        vec2 p1 = vec2(p.x, 1.0-p.y);
++
++const float angle = 30.0 * PI / 180.0;
++       float c = cos(-angle);
++       float s = sin(-angle);
++
++       mat3 rotation = mat3(
++         c, s, 0,
++         -s, c, 0,
++         0.12, 0.258, 1
++       );
++       c = cos(angle);
++       s = sin(angle);
++
++       mat3 rrotation = mat3(
++         c, s, 0,
++         -s, c, 0,
++         0.15, -0.5, 1
++       );
++       vec3 point = rotation * vec3(p1, 1.0);
++
++       float yc = point.y - cylinderCenter;
++
++       if (yc < -cylinderRadius)
++       {
++               // Behind surface
++               return behindSurface(p,yc, point, rrotation);
++       }
++
++       if (yc > cylinderRadius)
++       {
++               // Flat surface
++               return getFromColor(p);
++       }
++
++       float hitAngle = (acos(yc / cylinderRadius) + cylinderAngle) - PI;
++
++       float hitAngleMod = mod(hitAngle, 2.0 * PI);
++       if ((hitAngleMod > PI && amount < 0.5) || (hitAngleMod > PI/2.0 && amount < 0.0))
++       {
++               return getFromColor(p);
++       }
++
++       point = hitPoint(hitAngle, yc, point, rrotation);
++
++       if (point.x < 0.0 || point.y < 0.0 || point.x > 1.0 || point.y > 1.0)
++       {
++               return getFromColor(p);
++       }
++
++       vec4 color = backside(yc, point);
++
++       vec4 otherColor;
++
++       otherColor = getFromColor(p);
++
++
++       color = antiAlias(color, otherColor, cylinderRadius - abs(yc));
++
++       vec4 cl = seeThroughWithShadow(yc, p, point, rotation, rrotation);
++       float dist = distanceToEdge(point);
++
++       return antiAlias(color, cl, dist);
++}
++  `
++}
+\ No newline at end of file
+diff --git a/node_modules/ffcreator/lib/shader/shader.js b/node_modules/ffcreator/lib/shader/shader.js
+index d18e7ed..b8f0a25 100644
+--- a/node_modules/ffcreator/lib/shader/shader.js
++++ b/node_modules/ffcreator/lib/shader/shader.js
+@@ -47,7 +47,69 @@ const FastSwitch = require('./fastswitch');
+ const HangAround = require('./hangaround');
+ const CircleCrop = require('./circlecrop');
+ const WindowShades = require('./windowshades');
++const InvertedPageCurlDown = require('./InvertedPageCurlDown')
+ const TricolorCircle = require('./tricolorcircle');
++const SlideInRight = {
++  name: 'SlideInRight',
++  paramsTypes: { "direction": "vec2" },
++  defaultParams: { "direction": [1, 0] },
++  glsl: `
++  uniform vec2 direction; // = vec2(1.0, 0.0)
++
++  vec4 transition (vec2 uv) {
++    vec2 p = uv + progress * sign(direction);
++    vec2 f = fract(p);
++    return mix(
++      getToColor(f),
++      getFromColor(f),
++      step(0.0, p.y) * step(p.y, 1.0) * step(0.0, p.x) * step(p.x, 1.0)
++    );
++  }`
++}
++const SlideInLeft = {
++  name: 'SlideInLeft',
++  paramsTypes: { "direction": "vec2" },
++  defaultParams: { "direction": [1, 0] },
++  glsl: `
++  uniform vec2 direction; // = vec2(1.0, 0.0)
++
++  vec4 transition (vec2 uv) {
++    vec2 p = uv - progress * sign(direction);
++    vec2 f = fract(p);
++    return mix(
++      getToColor(f),
++      getFromColor(f),
++      step(0.0, p.y) * step(p.y, 1.0) * step(0.0, p.x) * step(p.x, 1.0)
++    );
++  }
++`,
++}
++
++const MiddleDissolution = {
++  name: 'MiddleDissolution',
++  paramsTypes: { "dots": 'float', "uvTop": 'float', "uvBottom": 'float' },
++  defaultParams: { "dots": '1.0', "uvBottom": '0.77', "uvTop": '0.21' },
++  glsl: `
++  const float SQRT_2 = 1.414213562373;
++  uniform float dots;//
++  uniform float uvTop;//
++  uniform float uvBottom;//
++  uniform vec2 center;// = vec2(0, 0);
++
++  vec4 transition(vec2 uv) {
++
++    if (uv.y < uvBottom && uv.y > uvTop)
++    {
++      bool nextImage = distance(fract(uv * 20.0), vec2(0.5, 0.5)) < ( progress / distance(uv, center));
++      return nextImage ? getToColor(uv) : getFromColor(uv);
++    }
++    else
++    {
++      return getToColor(uv);
++    }
++  }
++`,
++}
+ 
+ const extraTransitions = [
+   Fat,
+@@ -69,10 +131,14 @@ const extraTransitions = [
+   WaterWave,
+   HangAround,
+   FastSwitch,
++  InvertedPageCurlDown,
+   WindowShades,
+   CircleCrop,
+   TricolorCircle,
+   Quicksand,
++  SlideInRight,
++  SlideInLeft,
++  MiddleDissolution
+ ];
+ 
+ /**
+diff --git a/node_modules/ffcreator/lib/utils/canvas.js b/node_modules/ffcreator/lib/utils/canvas.js
+index 0ce7bf7..2ec3ddc 100644
+--- a/node_modules/ffcreator/lib/utils/canvas.js
++++ b/node_modules/ffcreator/lib/utils/canvas.js
+@@ -39,7 +39,7 @@ const CanvasUtil = {
+    * @return {buffer} The returned buffer value
+    * @public
+    */
+-  toBuffer({ type, canvas, quality = 70 }) {
++  toBuffer({ type, canvas, quality = 100 }) {
+     quality = quality >> 0;
+     quality = Math.min(quality, 100);
+     let compressionLevel = 10 - 0.1 * quality;
+diff --git a/node_modules/ffcreator/lib/utils/ffmpeg.js b/node_modules/ffcreator/lib/utils/ffmpeg.js
+index ba9a619..4fadeb0 100644
+--- a/node_modules/ffcreator/lib/utils/ffmpeg.js
++++ b/node_modules/ffcreator/lib/utils/ffmpeg.js
+@@ -78,6 +78,7 @@ const FFmpegUtil = {
+    */
+   addCoverImage({ video, output, cover }) {
+     return new Promise((resolve, reject) => {
++      // console.log("视频增加封面图片")
+       const command = this.createCommand();
+       command.addInput(video);
+       command.addInput(cover);
+@@ -104,6 +105,7 @@ const FFmpegUtil = {
+    */
+   interceptVideo({ video, ss, to, output }) {
+     return new Promise((resolve, reject) => {
++      console.log("从视频截取片段")
+       const command = this.createCommand();
+       command.addInput(video);
+       command.addInputOption('-ss', ss);
+diff --git a/node_modules/ffcreator/lib/utils/stream.js b/node_modules/ffcreator/lib/utils/stream.js
+index 6d5121e..80a9a8a 100644
+--- a/node_modules/ffcreator/lib/utils/stream.js
++++ b/node_modules/ffcreator/lib/utils/stream.js
+@@ -64,7 +64,6 @@ class FFStream extends Readable {
+         //throw new Error(`Stream pull data-rendering framing error ${e}.`);
+       }
+     }
+-
+     if (this.isEmpty(this.data)) {
+       this.push(null);
+       return;
+diff --git a/node_modules/ffcreator/types/lib/FFChart.d.ts b/node_modules/ffcreator/types/lib/FFChart.d.ts
+index 87ec028..86ae205 100644
+--- a/node_modules/ffcreator/types/lib/FFChart.d.ts
++++ b/node_modules/ffcreator/types/lib/FFChart.d.ts
+@@ -9,6 +9,7 @@ declare namespace FFCreatorSpace {
+      */
+     theme: 'light' | 'dark' | string;
+     option?: echartsSpace.EChartsOption;
++    optionOpts?: echartsSpace.SetOptionOpts
+     /**
+      * @default false
+      */
+@@ -24,7 +25,7 @@ declare namespace FFCreatorSpace {
+    *
+    * @example
+    *
+-   *    const fchart = new FFChart({ theme: 'dark', option, width: 600, height: 450 });
++   *    const fchart = new FFChart({ theme: 'dark', option, optionOpts, width: 600, height: 450 });
+    *    fchart.addEffect(['rotateIn', 'zoomIn'], 1.2, 1);
+    *    fchart.update(chart => {
+    *        ....
+@@ -42,7 +43,7 @@ declare namespace FFCreatorSpace {
+     /**
+      * Set echarts instance option value
+      */
+-    setOption(option: any): void;
++    setOption(option: any, opts?: echartsSpace.SetOptionOpts): void;
+ 
+     /**
+      * Set text font file path

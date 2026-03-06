@@ -1,0 +1,28 @@
+{
+  "name": "video-render-service",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development PORT=3000 nodemon src/index.js",
+    "start": "cross-env NODE_ENV=production PORT=3000 node src/index.js",
+    "postinstall": "patch-package"
+  },
+  "dependencies": {
+    "canvas": "2.11.2",
+    "ffcreator": "6.7.5",
+    "ffcreatorlite": "2.3.9",
+
+    "koa": "2.7.0",
+    "koa-bodyparser": "4.2.1",
+    "koa-router": "7.4.0",
+    "koa-static": "5.0.0",
+
+    "uuid": "8.3.2"
+  },
+  "devDependencies": {
+    "cross-env": "7.0.3",
+    "nodemon": "1.19.1",
+    "patch-package": "6.4.7"
+  }
+}
